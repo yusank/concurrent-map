@@ -364,6 +364,31 @@ func TestIterCb(t *testing.T) {
 	}
 }
 
+func TestRangeCb(t *testing.T) {
+	m := New()
+
+	// Insert 101 elements.
+	for i := 0; i < 101; i++ {
+		m.Set(strconv.Itoa(i), Animal{strconv.Itoa(i)})
+	}
+
+	counter := 0
+	// Iterate over elements.
+	m.RangeCb(func(key string, v interface{}) bool {
+		_, ok := v.(Animal)
+		if !ok {
+			t.Error("Expecting an animal object")
+		}
+
+		counter++
+		// stop when we want to stop
+		return counter <= 99
+	})
+	if counter != 100 {
+		t.Error("We should have counted 100 elements.")
+	}
+}
+
 func TestItems(t *testing.T) {
 	m := New()
 

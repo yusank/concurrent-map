@@ -266,6 +266,28 @@ func (m ConcurrentMap) IterCb(fn IterCb) {
 	}
 }
 
+// RangeCb called for every key,value when range
+// maps. RLock is held for all calls for a given shard
+// therefore callback sess consistent view of a shard,
+// but not across the shards
+type RangeCb func(key string, v interface{}) bool
+
+// Callback based iterator, More flexible then IterCb.
+// Based on RangeCb function, more like sync.Map.Range()
+func (m ConcurrentMap) RangeCb(fn RangeCb) {
+	for idx := range m {
+		shard := (m)[idx]
+		shard.RLock()
+		for key, value := range shard.items {
+			if !fn(key, value) {
+				shard.RUnlock()
+				return
+			}
+		}
+		shard.RUnlock()
+	}
+}
+
 // Keys returns all keys as []string
 func (m ConcurrentMap) Keys() []string {
 	count := m.Count()
